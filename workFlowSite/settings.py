@@ -37,8 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    #Third party
     'river',
-    'eToolActivation'
+
+    #Local
+    'empMaster',
+    'eToolActivation',
 ]
 
 MIDDLEWARE = [
