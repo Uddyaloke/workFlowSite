@@ -29,8 +29,8 @@ class eToolActivationAdmin(admin.ModelAdmin):
 		self.user = request.user
 		return super(eToolActivationAdmin, self).get_list_display(request)
 
-	def emp_id(self, obj):
-		return obj.emp_master.emp_id
+	# def emp_id(self, obj):
+	# 	return obj.emp_master.emp_id
 
 	def completion_date(self, obj):
 		completion_date = None

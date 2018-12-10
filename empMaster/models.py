@@ -2,12 +2,26 @@ from __future__ import unicode_literals
 import uuid
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
+
+from river.models.fields.state import StateField
 
 # Create your models here.
 
+from eToolActivation.models import eToolActivation
+
 
 class empMaster(models.Model):
+
+	etoolactivation = models.OneToOneField(
+						eToolActivation, 
+						on_delete=models.CASCADE,
+						related_name="eTool",
+						editable=False,
+						null=True,
+						blank=True
+						)
+
 	emp_id = models.IntegerField('EMP ID',  
 				null=False, 
 				blank=False,
@@ -31,7 +45,15 @@ class empMaster(models.Model):
 					editable=False
 					)
 
+	status = StateField(editable=False)
 
 	def __str__(self):
 		return self.emp_name
+
+	@transaction.atomic
+	def save(self, *args, **kwargs):
+		if not self.etoolactivation_id and self.status_id == 7:
+			self.etoolactivation, _ =eToolActivation.objects.get_or_create(emp_id=self.emp_id)
+
+		super(empMaster, self).save(*args, **kwargs)
 

@@ -20,5 +20,6 @@ admin.site.site_header = 'GCGNA BI Workflow Site'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^eToolActivation/', include('eToolActivation.urls'))
+    re_path(r'^eToolActivation/', include('eToolActivation.urls')),
+    re_path(r'^empMaster/', include('empMaster.urls'))
 ]

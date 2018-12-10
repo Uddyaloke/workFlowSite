@@ -8,16 +8,17 @@ from django.utils import timezone
 from river.models.fields.state import StateField
 
 # Create your models here.
-from empMaster.models import empMaster
 
 class eToolActivation(models.Model):
 
-	emp_master = models.ForeignKey(
-					empMaster, 
-					on_delete=models.CASCADE,
-					null=True,
-					blank=True
-					)
+	# emp_master = models.ForeignKey(
+	# 				empMaster, 
+	# 				on_delete=models.CASCADE
+	# 				)
+	emp_id = models.IntegerField("EMP ID",
+				null=False,
+				blank=False,
+				editable=False)
 	no = models.CharField("Item Number", 
 			max_length=50, 
 			default=uuid.uuid4, 
