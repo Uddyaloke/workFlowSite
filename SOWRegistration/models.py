@@ -107,7 +107,7 @@ class SOWRegistration(models.Model):
 							related_name="woncrtext",
 							editable=False,
 							null=True,
-							blank=True)
+							blank=True,)
 	won = models.CharField("WON",
 			max_length=10,
 			null=True,
@@ -135,12 +135,24 @@ class SOWRegistration(models.Model):
 	@transaction.atomic
 	def save(self, *args, **kwargs):
 		if not self.woncreationextension_id and self.status_id == 15:
-			self.woncreationextension, _ =WonCreationExtension.objects.get_or_create(
+			self.woncreationextension, _ =WonCreationExtension.objects.update_or_create(
 											tcs_contract_id=self.tcs_contract_id,
 											won=self.won,
-											location=self.location,
-											start_date=self.sow_start_date,
-											end_date=self.sow_end_date)
+											defaults={
+												"location": self.location,
+												"start_date": self.sow_start_date,
+												"end_date": self.sow_end_date
+											})
+
+		elif self.woncreationextension_id and self.status_id == 15:
+			self.woncreationextension, _ =WonCreationExtension.objects.update_or_create(
+											tcs_contract_id=self.tcs_contract_id,
+											won=self.won,
+											defaults={
+												"location": self.location,
+												"start_date": self.sow_start_date,
+												"end_date": self.sow_end_date
+											})
 
 		super(SOWRegistration, self).save(*args, **kwargs)
 
