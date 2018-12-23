@@ -1,24 +1,33 @@
 from __future__ import unicode_literals
 import uuid
 
+from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.utils import timezone
 
 from river.models.fields.state import StateField
+from river.models.managers.workflow_object import WorkflowObjectManager
 
 # Create your models here.
+from empMaster.models import empMaster
+from role.models import Role
+
 
 class eToolActivation(models.Model):
 
-	# emp_master = models.ForeignKey(
-	# 				empMaster, 
-	# 				on_delete=models.CASCADE
-	# 				)
+	emp_master = models.ForeignKey(
+					empMaster, 
+					on_delete=models.CASCADE,
+					related_name="eTool",
+					editable=False,
+					null=True,
+					blank=True)
 	emp_id = models.IntegerField("EMP ID",
 				null=False,
 				blank=False,
-				editable=False)
+				editable=True)
 	no = models.CharField("Item Number", 
 			max_length=50, 
 			default=uuid.uuid4, 
@@ -33,6 +42,13 @@ class eToolActivation(models.Model):
 			max_length=500,
 			null=True,
 			blank=True)
+	supervisor = models.ForeignKey(Role, 
+					on_delete=models.CASCADE,
+					null=True, 
+					blank=True,
+					limit_choices_to=Q(primary_role='PL') | 
+										Q(primary_role='AM') |
+										Q(secondary_role='PL'))
 	team_lead_check_list_1 = models.BooleanField("Team Lead Check List 1", 
 					default=False)
 	team_lead_check_list_2 = models.BooleanField("Team Lead Check List 2", 
@@ -63,20 +79,37 @@ class eToolActivation(models.Model):
 			blank=True)
 	created_date = models.DateTimeField("Date Created",
 					auto_now_add=True, 
-					editable=False
-					)
+					editable=False)
 	last_modified_date = models.DateTimeField("Last Modified Date",
 					auto_now=True,
-					editable=False
-					)
+					editable=False)
 	motion_date = models.DateTimeField("Motion Date",
 						default=None, 
 						null=True, 
 						blank=True,
-						editable=False
-						)
+						editable=False)
+	created_by = models.ForeignKey(User, 
+					on_delete=models.DO_NOTHING, 
+					blank=True, 
+					null=True, 
+					related_name='etool_create_by',
+					editable=False)
+	updated_by = models.ForeignKey(User, 
+					on_delete=models.DO_NOTHING, 
+					blank=True, 
+					null=True, 
+					related_name='etool_update_by',
+					editable=False)
+	account_manager = models.CharField("Account Manager",
+						max_length=20,
+						null=True,
+						blank=True,
+						editable=False)
 
 	status = StateField(editable=False)
+
+	objects = WorkflowObjectManager()
+
 
 	def __str__(self):
 		return "%s" %(self.status)

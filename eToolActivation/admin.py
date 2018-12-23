@@ -2,6 +2,7 @@ import datetime
 # from datetime import datetime
 
 from django.contrib import admin
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils import timezone
@@ -9,6 +10,7 @@ from django.utils import timezone
 # Register your models here.
 from .models import eToolActivation
 from empMaster.models import empMaster
+from role.models import Role
 
 def create_river_button(obj, proceeding):
 			return """
@@ -24,13 +26,38 @@ def create_river_button(obj, proceeding):
 class eToolActivationAdmin(admin.ModelAdmin):
 	
 	list_display = ['emp_id', 'created_date', 'motion_date', 'completion_date', 'days_open', 'days_in_motion', 'status', 'available_actions']
+	# list_filter = ["emp_id", "status"]
+	search_fields = ['emp_id', 'subject', 'description']
+
+	class Meta:
+		model = eToolActivation
+
+	def get_queryset(self, request):
+		qs = super(eToolActivationAdmin, self).get_queryset(request)
+		chk_user = Role.objects.filter(user=request.user).filter(view_all=True)
+		spvsr_user = Role.objects.filter(user=request.user).values_list('supervisor', flat=True)
+		user_items = Role.objects.filter(supervisor__in=spvsr_user).values_list('user', flat=True)
+		is_spvsr = Role.objects.filter(supervisor=request.user)
+
+		if chk_user or request.user.is_superuser:
+			return qs
+
+		elif is_spvsr:
+			return qs.filter(Q(account_manager=request.user.id)|
+							Q(created_by=request.user)|
+							Q(updated_by=request.user))
+
+		elif user_items:
+			return qs.filter(created_by__in=user_items)
+
+		else:
+			return qs.filter(Q(created_by=request.user) |
+						Q(updated_by=request.user)| 
+						Q(account_manager=request.user.id))
 
 	def get_list_display(self, request):
 		self.user = request.user
 		return super(eToolActivationAdmin, self).get_list_display(request)
-
-	# def emp_id(self, obj):
-	# 	return obj.emp_master.emp_id
 
 	def completion_date(self, obj):
 		completion_date = None
@@ -69,6 +96,16 @@ class eToolActivationAdmin(admin.ModelAdmin):
 			else:
 				delta = timezone.now() - obj.motion_date
 		return delta
+
+	def save_model(self, request, obj, form, change): 
+		if obj.created_by is None:
+			obj.created_by = request.user
+		obj.updated_by = request.user
+		if obj.account_manager is None:
+			items = Role.objects.filter(user=request.user).values('supervisor')
+			for item in items:
+				obj.account_manager = item['supervisor']
+		obj.save()
 
 
 	def available_actions(self, obj):

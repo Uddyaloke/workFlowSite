@@ -12,6 +12,7 @@ from .models import eToolActivation
 def proceed_eToolActivation(request, eToolActivation_id, next_state_id=None):
 	etoolactivation = get_object_or_404(eToolActivation, pk=eToolActivation_id)
 	next_state = get_object_or_404(State, pk=next_state_id)
+	etoolactivation.updated_by = request.user
 
 	try:
 		if etoolactivation.status_id == 1:

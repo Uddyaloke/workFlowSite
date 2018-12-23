@@ -39,12 +39,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     #Third party
+    'phonenumber_field',
     'river',
 
     #Local
+    'adhocTask',
     'empMaster',
     'eToolActivation',
+    'role',
     'SOWRegistration',
+    'workList',
 ]
 
 MIDDLEWARE = [
