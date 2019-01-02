@@ -9,7 +9,7 @@ from django.utils import timezone
 
 # Register your models here.
 from .models import eToolActivation
-from empMaster.models import empMaster
+# from ManpowerManagement.models import EmpRegistration
 from role.models import Role
 
 def create_river_button(obj, proceeding):

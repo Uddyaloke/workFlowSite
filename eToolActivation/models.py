@@ -11,14 +11,14 @@ from river.models.fields.state import StateField
 from river.models.managers.workflow_object import WorkflowObjectManager
 
 # Create your models here.
-from empMaster.models import empMaster
+from ManpowerManagement.models import EmpRegistration
 from role.models import Role
 
 
 class eToolActivation(models.Model):
 
 	emp_master = models.ForeignKey(
-					empMaster, 
+					EmpRegistration, 
 					on_delete=models.CASCADE,
 					related_name="eTool",
 					editable=False,

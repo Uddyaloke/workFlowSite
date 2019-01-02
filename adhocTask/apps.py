@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class AdhoctaskConfig(AppConfig):
+class adhocTaskConfig(AppConfig):
     name = 'adhocTask'
+    verbose_name = 'Adhoc Task'

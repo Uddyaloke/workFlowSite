@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class RoleConfig(AppConfig):
+class roleConfig(AppConfig):
     name = 'role'
+    verbose_name = 'Reporting Hierarchy'

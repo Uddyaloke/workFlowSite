@@ -1,0 +1,27 @@
+{% extends 'admin/base.html' %}
+{% load admin_static %}
+{# Workaround to avoid circular template extends errors #}
+
+
+{# Additional CSS includes #}
+{% block extrastyle %}
+ <link rel="stylesheet" type="text/css" href="{% static 'css/workFlowSite.css' %}" media="all">
+{{block.super}}
+{% endblock %}
+
+
+{# Additional JS files in footer, right before </body> #}
+{% block extrajs %}
+  <script type="text/javascript" src="{% static 'js/workFlowSite.js' %}"></script>
+  {{block.super}}
+{% endblock %}
+
+{% block footer_links %}
+{% endblock %}
+
+
+{% block copyright %}
+{% endblock %}
+
+{% block footer_branding %}
+{% endblock %}

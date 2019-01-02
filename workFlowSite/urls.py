@@ -18,17 +18,22 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import path, re_path, include, reverse_lazy,reverse
 from django.views.generic.base import RedirectView
 
+from workList.views import test_list
+from .views import GeneratePdf
 
-admin.site.site_header = 'GCGNA BI Workflow Site'
-admin.site.site_title = 'GCGNA BI Workflow Site'
-admin.site.index_title = 'Welcome to Workflow Inventory'
+
+admin.site.site_header = 'iFlow'
+admin.site.site_title = 'iFlow'
+admin.site.index_title = 'Welcome to iFlow Inventory'
 
 urlpatterns = [
     # re_path(r'^/', include('workList.urls')),
     path('admin/', admin.site.urls),
+    path('admin/login', test_list),
     re_path(r'^adhocTask/', include('adhocTask.urls')),
-    re_path(r'^empMaster/', include('empMaster.urls')),
+    re_path(r'^ManpowerManagement/', include('ManpowerManagement.urls')),
     re_path(r'^eToolActivation/', include('eToolActivation.urls')),
     re_path(r'^SOWRegistration/', include('SOWRegistration.urls')),
+    re_path(r'^pdf/$', GeneratePdf.as_view()),
     re_path(r'^$', RedirectView.as_view(url =reverse_lazy('admin:workList_worklist_changelist')), name="workList"),
 ]

@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class SowregistrationConfig(AppConfig):
+class SOWRegistrationConfig(AppConfig):
     name = 'SOWRegistration'
+    verbose_name = 'SOW Registration'

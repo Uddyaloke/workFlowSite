@@ -1,4 +1,5 @@
 import datetime
+import re
 # from datetime import datetime
 
 from django.contrib import admin
@@ -11,21 +12,10 @@ from django.utils import timezone
 from .models import adhocTask
 from role.models import Role
 
-def create_river_button(obj, proceeding):
-			return """
-				<input
-					type="button"
-					style="margin:2px;2px;2px;2px;"
-					value="%s"
-					onclick="location.href='%s'"/>
-			"""%(proceeding.meta.transition, 
-				reverse('adhocTask:proceed_adhocTask', kwargs={'adhocTask_id':obj.pk, 'next_state_id':proceeding.meta.transition.destination_state.pk})
-				)
 
 class adhocTaskAdmin(admin.ModelAdmin):
 	
 	list_display = ['task_subject', 'assigned_to', 'created_date', 'days_open', 'completion_date', 'status', 'available_actions']
-	# list_filter = ["assigned_to", "status"]
 	search_fields = ["task_subject", "task_description", "resolution_description", "complete_restart_reason", ]
 
 	class Meta:
@@ -43,7 +33,8 @@ class adhocTaskAdmin(admin.ModelAdmin):
 			return qs.filter(created_by=request.user)
 
 		elif is_spvsr:
-			return qs.filter(created_by=request.user)
+			return qs.filter(Q(created_by=request.user)|
+							Q(assigned_to_id__in=role_id))
 
 		elif user_items:
 			return qs.filter(assigned_to_id__in=role_id)
@@ -54,6 +45,77 @@ class adhocTaskAdmin(admin.ModelAdmin):
 	def get_list_display(self, request):
 		self.user = request.user
 		return super(adhocTaskAdmin, self).get_list_display(request)
+
+	def get_readonly_fields(self, request, obj=None):
+		if obj:
+			if obj.status_id > 16 and request.user == obj.created_by:
+				return [
+					'task_subject',
+					'task_description', 
+					'assigned_to',
+					'resolution_description_history',
+					'add_resolution_description', 
+					'complete_restart_reason_history'
+					]
+			elif obj.status_id > 16:
+				return [
+					'task_subject',
+					'task_description', 
+					'assigned_to',
+					'resolution_description_history', 
+					'complete_restart_reason_history',
+					'add_complete_restart_reason'
+					]
+			else:
+				return [
+					'task_subject',
+					'task_description', 
+					'assigned_to',
+					'resolution_description_history',
+					'add_resolution_description', 
+					'complete_restart_reason_history',
+					'add_complete_restart_reason'
+					]
+		else:
+			return [
+				'resolution_description_history',
+				'add_resolution_description', 
+				'complete_restart_reason_history',
+				'add_complete_restart_reason'
+				]
+
+
+	def get_fieldsets(self, request, obj=None):
+		if obj:
+			if obj.status_id == 16:
+				if request.user == obj.created_by:
+					return [(None, {'fields': ('task_subject',
+												'task_description', 
+												'assigned_to')})]
+				else:
+					return [(None, {'fields': ('task_subject',
+												'task_description')})]
+
+			if obj.status_id == 17:
+				return [(None, {'fields': ('task_subject',
+											'task_description', 
+											'assigned_to',
+											'resolution_description_history',
+											'add_resolution_description')})]
+			if obj.status_id > 17:
+				return [(None, {'fields': ('task_subject',
+											'task_description', 
+											'assigned_to',
+											'resolution_description_history',
+											'add_resolution_description',
+											'complete_restart_reason_history',
+											'add_complete_restart_reason')})]
+
+		else:
+			return [(None, {'fields': ('task_subject',
+										'task_description', 
+										'assigned_to')})]
+
 
 	def completion_date(self, obj):
 		completion_date = None
@@ -80,21 +142,57 @@ class adhocTaskAdmin(admin.ModelAdmin):
 
 
 	def save_model(self, request, obj, form, change): 
+		now = datetime.datetime.now()
+
 		if obj.created_by is None:
 			obj.created_by = request.user
+
 		obj.updated_by = request.user
+
 		if obj.account_manager is None:
 			items = Role.objects.filter(user=request.user).values('supervisor')
+
 			for item in items:
 				obj.account_manager = item['supervisor']
+
+		obj.add_resolution_description = ''
+
+		obj.add_complete_restart_reason = ''
+
+		if request.POST.get('add_resolution_description'):
+			initial_data = ''
+
+			if obj.resolution_description_history:
+				initial_data = obj.resolution_description_history
+
+			obj.resolution_description_history = initial_data + now.strftime("%Y-%m-%d %H:%M") + '| ' + request.POST.get('add_resolution_description') + '\n'
+
+		if request.POST.get('add_complete_restart_reason'):
+			initial_data = ''
+
+			if obj.complete_restart_reason_history:
+				initial_data = obj.complete_restart_reason_history
+
+			obj.complete_restart_reason_history = initial_data + now.strftime("%Y-%m-%d %H:%M") + '| ' + request.POST.get('add_complete_restart_reason') + '\n'	
+
 		obj.save()
 
 	def available_actions(self, obj):
-		content = ""
-		for proceeding in obj.get_available_proceedings(self.user):
-			content += create_river_button(obj, proceeding)
+		
+		final_cnt = obj.get_available_proceedings(self.user).count()
 
-		return format_html(content)
+		if final_cnt and final_cnt > 0:
+
+			content = f"<select id='proceed-action-select-%s'>\
+					<option value=''>------------------------------------</option></br>"%(obj.pk)
+
+			for proceeding in obj.get_available_proceedings(self.user):
+				content += f"<option value='%s'>%s</option>"%(reverse('adhocTask:proceed_adhocTask', kwargs={'adhocTask_id':obj.pk, 'next_state_id':proceeding.meta.transition.destination_state.pk}), proceeding.meta.transition)
+			
+			content += f"</select>\
+						<button id='proceed-action' type='submit' class='button btn-ok' onclick='myFunction(event, %s)'>Proceed</button>"%(obj.pk)
+
+			return format_html(content)
 
 	available_actions.allow_tags = True
 
